@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chat Interface</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <header>
+        <div class="container">
+            <h1 class="logo">4TML AI</h1>
+            <button id="theme-toggle-button">🌙</button>
+        </div>
+    </header>
+
+    <div class="app-layout">
+        
+        <aside class="sidebar">
+            <div class="sidebar-content">
+                <button class="button" id="newChatBtn">
+                    Bắt đầu Chat Mới
+                </button>
+                
+                <h3>Lịch sử Chat</h3>
+                <nav class="chat-history">
+                    <ul id="chatHistoryList">
+                        <li><strong>4</strong> anh em siu nhân</li>
+                        <li><strong>Thằng</strong> Cuội ngồi gốc cây nào?</li>
+                        <li><strong>Mặt</strong> trời của em</li>
+                        <li><strong>Lon</strong> nước hư uống down bụng?</li>
+                        <li><strong>-------------------------</strong></li>
+                    </ul>
+                </nav>
+            </div>
+        </aside>
+
+        <main class="chat-container">
+            <div class="chat-window" id="chatWindow">
+                <div class="welcome-message" id="welcomeMessage">
+                    <img src="pict/logo_dark.png" alt="Logo 4TML AI" class="welcome-logo-img" id="theme-logo">
+                    <p>Tôi có thể giúp gì cho bạn hôm nay?</p>
+                </div>
+            </div>
+
+            <footer class="chat-input-area">
+                <div class="chat-input-container">
+                    <button class="button-small file-download-button" id="downloadOutputBtn" style="display: none;">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                            <path fill-rule="evenodd" d="M12 2.25a.75.75 0 01.75.75v11.69l3.44-3.44a.75.75 0 111.06 1.06l-4.75 4.75a.75.75 0 01-1.06 0l-4.75-4.75a.75.75 0 111.06-1.06l3.44 3.44V3a.75.75 0 01.75-.75zM17.25 21a.75.75 0 000 1.5h-.75a.75.75 0 000 1.5H7.5a.75.75 0 000-1.5H6.75a.75.75 0 000-1.5h10.5z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <textarea id="chatInput" placeholder="Hỏi AI bất cứ điều gì..." rows="1"></textarea>
+                    <button class="button-small" id="sendBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                            <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.98a.75.75 0 000-1.214A60.517 60.517 0 003.478 2.405z" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="processing-status-area" id="processingStatusArea"></div>
+                </footer>
+        </main>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 

@@ -1,0 +1,9 @@
+# Requirements Engineering Agent - Dependencies
+
+# Core dependencies
+pydantic>=2.0.0
+google-adk>=0.1.0
+google-genai>=1.0.0
+
+# Optional but recommended
+colorama>=0.4.6  # For colored terminal output on Windows
