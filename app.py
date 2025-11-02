@@ -240,7 +240,7 @@ def process_prompt():
         f"- File Ghi Đè (input.txt): {saved_raw_file_current}\n"
         f"- File Cấu Trúc (JSON): {os.path.basename(saved_json_file)}\n"
         f"- Báo cáo phân tích: Đang tạo nội dung mẫu trong output.txt."
-        f"- Hãy chờ 2 phút nhé!\n"
+        f"- Hãy chờ 2 phút nhé rồi ấn tải nhé!\n"
     )
     # --- KẾT THÚC MÔ PHỎNG LUỒNG AGENT ---
 
