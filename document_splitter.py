@@ -1,98 +1,107 @@
+#!/usr/bin/env python3
 """
-Helper module to split combined SRS + User Stories documents
+Document Splitter - Helper to split combined SRS + User Stories documents.
+Language-agnostic logic but tuned for common ENGLISH markers.
+Never modifies the original text content; only slices and returns as-is.
 """
 
 def split_combined_document(text: str) -> dict:
-    """
-    Split a document that contains both SRS and User Stories sections.
-    
-    Returns:
-        dict with keys 'srs_text' and 'stories_text'
-    """
-    # Find the boundary between SRS and User Stories
-    # Common patterns: "User Story 1", "User Stories", "US-", "Story-"
-    
     lower_text = text.lower()
-    
-    # Search for user story markers
-    markers = [
-        'user story 1',
-        'user story #1',
-        'story 1:',
-        'us-1',
-        'us1:',
-    ]
-    
+    markers = ['user story 1', 'user story #1', 'story 1:', 'us-1', 'us1:', 'user story:']
     split_index = -1
-    
+
     for marker in markers:
         idx = lower_text.find(marker)
         if idx != -1:
             split_index = idx
             break
-    
+
     if split_index == -1:
-        # Try to find any line starting with "User Story"
         lines = text.split('\n')
         for i, line in enumerate(lines):
             if line.strip().lower().startswith('user story'):
-                # Get character position
                 split_index = sum(len(l) + 1 for l in lines[:i])
                 break
-    
+
     if split_index == -1:
-        # Could not find split point - assume entire document is SRS
-        return {
-            'srs_text': text,
-            'stories_text': None,
-            'has_both': False
-        }
-    
-    # Split the document
+        return {'srs_text': text, 'stories_text': None, 'has_both': False}
+
     srs_part = text[:split_index].strip()
     stories_part = text[split_index:].strip()
-    
-    return {
-        'srs_text': srs_part,
-        'stories_text': stories_part,
-        'has_both': True
-    }
+    return {'srs_text': srs_part, 'stories_text': stories_part, 'has_both': True}
 
 
 def detect_document_type(text: str) -> str:
-    """
-    Detect if a document is SRS, User Stories, or Both.
-    
-    Returns:
-        'srs', 'user_stories', or 'both'
-    """
     lower_text = text.lower()
-    
-    # Check for SRS indicators
-    has_srs = any(indicator in lower_text for indicator in [
-        'software requirements specification',
-        'system requirements',
-        'functional requirements',
-        'non-functional requirements',
-        'srs',
-        'overall description',
-        'external interface requirements'
-    ])
-    
-    # Check for User Story indicators
-    has_stories = any(indicator in lower_text for indicator in [
-        'as a ',
-        'as an ',
-        'user story',
-        'i want to',
-        'so that'
-    ])
-    
+    srs_indicators = [
+        'software requirements specification', 'system requirements',
+        'functional requirements', 'non-functional requirements', 'srs',
+        'overall description', 'external interface requirements', 'system features',
+        'performance requirements'
+    ]
+    story_indicators = [
+        'as a ', 'as an ', 'user story', 'i want to', 'so that',
+        'acceptance criteria', 'given when then'
+    ]
+    has_srs = any(ind in lower_text for ind in srs_indicators)
+    has_stories = any(ind in lower_text for ind in story_indicators)
     if has_srs and has_stories:
         return 'both'
-    elif has_srs:
+    if has_srs:
         return 'srs'
-    elif has_stories:
+    if has_stories:
         return 'user_stories'
-    else:
-        return 'unknown'
+    return 'unknown'
+
+
+def extract_sections(text: str) -> dict:
+    sections = {
+        'introduction': [], 'functional_requirements': [],
+        'non_functional_requirements': [], 'user_stories': [], 'other': []
+    }
+    lines = text.split('\n')
+    current = 'other'
+    for line in lines:
+        lower = line.lower().strip()
+        if 'introduction' in lower or 'overview' in lower:
+            current = 'introduction'
+        elif 'functional requirement' in lower:
+            current = 'functional_requirements'
+        elif 'non-functional requirement' in lower or 'non functional' in lower:
+            current = 'non_functional_requirements'
+        elif 'user story' in lower or 'user stories' in lower:
+            current = 'user_stories'
+        if line.strip():
+            sections[current].append(line)
+    return {k: '\n'.join(v) if v else '' for k, v in sections.items()}
+
+
+def validate_document_quality(text: str) -> dict:
+    lines = [l.strip() for l in text.split('\n') if l.strip()]
+    words = text.split()
+    metrics = {
+        'total_lines': len(lines),
+        'total_words': len(words),
+        'total_chars': len(text),
+        'avg_line_length': len(text) / len(lines) if lines else 0,
+        'has_headers': False,
+        'has_numbering': False,
+        'has_requirements': False,
+    }
+    for line in lines:
+        low = line.lower()
+        if ':' in line or any(w in low for w in ['section', 'chapter', 'overview']):
+            metrics['has_headers'] = True
+        if line[0].isdigit() and ('.' in line[:5] or ')' in line[:5]):
+            metrics['has_numbering'] = True
+        if any(w in low for w in ['shall', 'must', 'should', 'will']):
+            metrics['has_requirements'] = True
+    factors = [
+        metrics['total_words'] > 100,
+        metrics['has_headers'],
+        metrics['has_numbering'],
+        metrics['has_requirements'],
+        metrics['avg_line_length'] > 20,
+    ]
+    metrics['quality_score'] = sum(factors) / len(factors)
+    return metrics

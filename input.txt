@@ -1,38 +1,28 @@
-# CampusRide Requirements Analysis Report
-## 1. Executive Summary
-This report analyzes the requirements document for the CampusRide application, identifying critical gaps and suggesting key enhancements. A major issue is the lack of detail in the provided user story, which hinders a clear understanding of the application's intended functionality. Several enhancements are recommended to improve security, performance, scalability, maintainability, and data privacy.
-## 2. Critical Issues (High Priority)
-### Missing User Story Details
-**Problem:** The user story provided ("huhuhihi" - STORY-001) is excessively vague and fails to provide any meaningful information about the desired functionality or user needs. This makes it impossible to understand the purpose of this feature within the application.
-**Action:** The user story "huhuhihi" must be replaced with a clear, concise, and well-defined user story. A good user story should follow the format: "As a [user role], I want [goal] so that [benefit]." For example, a better user story would be: "As a student, I want to be able to request a ride to a specific campus location so that I can get there quickly and safely." This will allow for proper development and testing of the application.
-## 3. Enhancement Suggestions (Low Priority)
-### Security Enhancements
-**Problem:** Security is crucial for protecting user privacy and preventing unauthorized access to sensitive information, such as location data and payment details.
-**Action:** Add non-functional requirements for security. These should include:
--   User authentication mechanisms to verify user identities.
--   Data encryption to protect sensitive data both in transit and at rest.
--   Access controls to restrict access to data based on user roles and permissions.
-### Performance Enhancements
-**Problem:** Performance is critical for user satisfaction. Slow response times can lead to frustration and abandonment of the application.
-**Action:** Define performance requirements by specifying acceptable response times for:
--   Ride requests.
--   Location updates.
--   Payment processing.
-These requirements should ensure a smooth and responsive user experience.
-### Scalability Enhancements
-**Problem:** Scalability is necessary for accommodating future growth and maintaining service quality as the user base expands.
-**Action:** Include scalability requirements to ensure the system can handle a growing number of users and ride requests without performance degradation. These requirements should address how the system will scale its resources (e.g., servers, database capacity) to meet increasing demand.
-### Maintainability Enhancements
-**Problem:** Maintainability reduces the cost and effort required to evolve the system over time, ensuring its long-term viability.
-**Action:** Add maintainability requirements, including:
--   Coding standards to ensure consistent code quality.
--   Documentation guidelines to provide clear explanations of the system's architecture and functionality.
--   Modular design principles to facilitate future updates and bug fixes.
-### Data Privacy Enhancements
-**Problem:** Data privacy is essential for building trust with users and complying with legal requirements.
-**Action:** Specify requirements for data privacy and compliance with relevant regulations, such as GDPR (General Data Protection Regulation) or CCPA (California Consumer Privacy Act), to protect user data and avoid legal issues.  This includes outlining data collection, storage, and usage policies, as well as user rights regarding their data.
-## 4. Recommendations
-The following steps are recommended to improve the requirements for the CampusRide application:
-1.  **Immediately revise the vague user story ("huhuhihi") with a specific and well-defined user story.**
-2.  **Incorporate the security, performance, scalability, maintainability, and data privacy enhancements as non-functional requirements.**
-3.  **Conduct a thorough review of all requirements with stakeholders to ensure completeness and accuracy.**
+Online Food Ordering System
+Version 1.0
+Date: November 2, 2025
+
+1. Purpose
+This document specifies the requirements for an Online Food Ordering System that allows customers to place and manage food orders through a website and mobile app.
+
+2. Scope
+The system enables customers to browse restaurant menus, place orders, and make payments. Restaurants can receive and process orders through their management dashboard.
+
+3. Functional Requirements
+
+FR1: Users can register, log in, and view past orders.
+FR2: Users can only place orders after payment is confirmed.
+FR3: The system shall allow users to pay after delivery to ensure satisfaction.
+FR4: Restaurants can update menu items and set availability status.
+FR5: The admin can remove any restaurant from the system.
+
+4. Non-Functional Requirements
+
+NFR1: The system should process all orders in under 3 seconds.
+NFR2: The system must be accessible on both web and mobile platforms.
+
+User Story 1:As a customer, I want to pay online before ordering so that my order is processed immediately.
+User Story 2:As a customer, I want to pay after I receive my food so I can make sure it’s correct and fresh.
+User Story 3:As a restaurant owner, I want to automatically reject unpaid orders to avoid fake or spam orders.
+User Story 4:As a restaurant owner, I want the system to auto-accept all orders so customers don’t have to wait for manual confirmation.
+User Story 5:As an admin, I want to allow restaurants to temporarily close during off-hours but also keep accepting pre-orders anytime.

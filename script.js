@@ -82,11 +82,47 @@ document.addEventListener('DOMContentLoaded', () => {
         processingStatusArea.textContent = ''; // Xóa trạng thái
     });
     
-    // Xử lý nút Tải file
-    downloadOutputBtn.addEventListener('click', () => {
-        // Gọi API Backend để tải file output.txt
-        window.location.href = 'http://127.0.0.1:5000/api/download_output';
-        processingStatusArea.textContent = 'Đang tải file output.txt...';
+    // *** CẬP NHẬT: Xử lý nút Tải file với kiểm tra file tồn tại ***
+    downloadOutputBtn.addEventListener('click', async () => {
+        try {
+            // Kiểm tra trạng thái xử lý trước
+            const statusResponse = await fetch('http://127.0.0.1:5000/api/check_status');
+            const statusData = await statusResponse.json();
+            
+            // Nếu đang xử lý, hiển thị thông báo
+            if (statusData.status === 'processing') {
+                alert('⏳ Vui lòng chờ trong giây lát!\n\nHệ thống đang xử lý dữ liệu của bạn. File output.txt sẽ sẵn sàng sau khi hoàn tất.');
+                return;
+            }
+            
+            // Nếu xử lý thất bại
+            if (statusData.status === 'failed') {
+                alert('❌ Xử lý thất bại!\n\nKhông thể tạo file output.txt. Vui lòng thử lại.');
+                return;
+            }
+            
+            // Kiểm tra file có tồn tại không bằng cách thử tải
+            const checkResponse = await fetch('http://127.0.0.1:5000/api/get_output');
+            const checkData = await checkResponse.json();
+            
+            if (!checkData.success) {
+                alert('⏳ Vui lòng chờ trong giây lát!\n\nFile output.txt chưa được tạo ra. Hệ thống đang xử lý dữ liệu của bạn.');
+                return;
+            }
+            
+            // Nếu file tồn tại, tiến hành tải xuống
+            processingStatusArea.textContent = '📥 Đang tải file output.txt...';
+            window.location.href = 'http://127.0.0.1:5000/api/download_output';
+            
+            // Sau 1 giây, cập nhật trạng thái
+            setTimeout(() => {
+                processingStatusArea.textContent = '✅ Đã tải xuống thành công!';
+            }, 1000);
+            
+        } catch (error) {
+            console.error('Lỗi khi kiểm tra file:', error);
+            alert('⚠️ Lỗi kết nối!\n\nKhông thể kết nối đến server. Vui lòng kiểm tra lại.');
+        }
     });
 
 
@@ -149,8 +185,6 @@ document.addEventListener('DOMContentLoaded', () => {
                  }
             } catch (error) {
                  processingStatusArea.innerHTML = `⚠️ **Lỗi kết nối Backend**`;
-                 // Ngừng kiểm tra nếu có lỗi kết nối
-                 // clearInterval(checkStatusInterval); 
             }
             
         }, 2000); // Kiểm tra mỗi 2 giây

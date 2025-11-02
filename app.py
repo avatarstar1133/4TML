@@ -203,19 +203,19 @@ def process_prompt():
     saved_json_file = save_structured_data_to_file(structured_data)
     
     # 3. Ghi đè file output.txt để có nội dung mẫu cho việc tải xuống
-    output_content_for_download = (
-        f"*** BÁO CÁO PHÂN TÍCH YÊU CẦU (BƯỚC {message_count}) ***\n\n"
-        f"1. Yêu cầu Hệ thống (SRS):\n{structured_data['srs_text']}\n\n"
-        f"2. User Stories:\n{structured_data['user_stories_text']}\n\n"
-        f"3. Nguồn: {'File đã tải' if is_file_input else 'Lời nhắc từ người dùng'}\n"
-        f"4. File Gốc Tuần Tự: {os.path.basename(saved_raw_file_sequential)}\n"
-    )
+    # output_content_for_download = (
+    #     f"*** BÁO CÁO PHÂN TÍCH YÊU CẦU (BƯỚC {message_count}) ***\n\n"
+    #     f"1. Yêu cầu Hệ thống (SRS):\n{structured_data['srs_text']}\n\n"
+    #     f"2. User Stories:\n{structured_data['user_stories_text']}\n\n"
+    #     f"3. Nguồn: {'File đã tải' if is_file_input else 'Lời nhắc từ người dùng'}\n"
+    #     f"4. File Gốc Tuần Tự: {os.path.basename(saved_raw_file_sequential)}\n"
+    # )
     
-    try:
-        with open('output.txt', 'w', encoding='utf-8') as f:
-            f.write(output_content_for_download)
-    except:
-        pass
+    # try:
+    #     with open('output.txt', 'w', encoding='utf-8') as f:
+    #         f.write(output_content_for_download)
+    # except:
+    #     pass
 
     # 4. Cập nhật status file thành "completed" (Hoàn tất giả lập)
     try:
@@ -233,14 +233,13 @@ def process_prompt():
     # 5. Tạo phản hồi cho Frontend
     source_type = "tệp tin" if is_file_input else "câu lệnh"
     ai_response = (
-        f"✅ Phân tích {source_type} (Bước {message_count}) hoàn tất!\n\n"
+        f"✅ **Phân tích {source_type} (Bước {message_count}) hoàn tất!**\n\n"
         f"Tôi đã đọc nội dung, xử lý và lưu trữ thành công.\n"
         f"Thông tin đã lưu trên Server:\n"
-        f"- File Gốc Tuần Tự (.txt): `{os.path.basename(saved_raw_file_sequential)}`\n"
-        f"- File Ghi Đè (input.txt): `{saved_raw_file_current}`\n"
-        f"- File Cấu Trúc (JSON): `{os.path.basename(saved_json_file)}`\n"
-        f"- Báo cáo phân tích: Đã tạo nội dung mẫu trong `output.txt`."
-        f" Thời gian chờ 1 phút nhé ^^"
+        f"- **File Gốc Tuần Tự (.txt):** `{os.path.basename(saved_raw_file_sequential)}`\n"
+        f"- **File Ghi Đè (input.txt):** `{saved_raw_file_current}`\n"
+        f"- **File Cấu Trúc (JSON):** `{os.path.basename(saved_json_file)}`\n"
+        f"- **Báo cáo phân tích:** Đang tạo nội dung mẫu trong `output.txt`."
     )
     # --- KẾT THÚC MÔ PHỎNG LUỒNG AGENT ---
 
@@ -305,4 +304,14 @@ def check_status():
 
 
 if __name__ == '__main__':
+    output_file = 'output.txt'
+    try:
+        if os.path.exists(output_file):
+            os.remove(output_file)
+            print(f"🧹 Đã xóa file cũ: {output_file}")
+        else:
+            print("✅ Không có file output.txt cũ để xóa.")
+    except Exception as e:
+        print(f"⚠️ Lỗi khi xóa file output.txt: {e}")
+
     app.run(debug=True, port=5000)

@@ -1,476 +1,284 @@
 #!/usr/bin/env python3
 """
-CLI Runner for Requirements Engineering Agent (SequentialAgent Version)
-Automatically executes all agents in sequence
+CLI Runner for Requirements Engineering Agent (English-only, with Q&A)
+- ENGLISH logs & prompts.
+- STRICT: Never translate or modify original quoted source content.
+- Supports follow-up Q&A in the SAME session via --ask "your question".
 """
 
-import json
 import sys
 import asyncio
 import argparse
 import os
 from pathlib import Path
 from datetime import datetime
-from typing import Optional
 
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
 
-from agent_definitions import root_agent
+from agent_definitions import root_agent  # root has both pipeline & query handler
 from document_splitter import split_combined_document, detect_document_type
 
+# ---------- Console helpers ----------
+class Colors:
+    END = "\033[0m"; BOLD = "\033[1m"; HEADER = "\033[95m"
+    BLUE = "\033[94m"; CYAN = "\033[96m"; GREEN = "\033[92m"
+    YELLOW = "\033[93m"; RED = "\033[91m"
+
+def print_step(msg, n=None):
+    prefix = f"[STEP {n}] " if n is not None else ""
+    print(f"{Colors.BLUE}{prefix}{msg}{Colors.END}")
+
+def print_success(msg): print(f"{Colors.GREEN}✓ {msg}{Colors.END}")
+def print_error(msg):   print(f"{Colors.RED}✗ {msg}{Colors.END}")
+def print_warning(msg): print(f"{Colors.YELLOW}! {msg}{Colors.END}")
+def print_info(msg):    print(f"{Colors.CYAN}{msg}{Colors.END}")
+
+def is_json_response(text: str) -> bool:
+    t = text.strip()
+    if t.startswith("```json") and t.endswith("```"):
+        t = t[7:-3].strip()
+    return (t.startswith("{") and t.endswith("}")) or (t.startswith("[") and t.endswith("]"))
+
+def extract_final_report(text: str) -> str:
+    """
+    Keep readable report (markdown/text). Strip stray JSON blocks but be forgiving.
+    """
+    if not text:
+        return ""
+    low = text.lower()
+    if "```markdown" in low:
+        start = low.find("```markdown")
+        end = low.find("```", start + 3)
+        if end != -1:
+            return text[start + len("```markdown"): end].strip()
+    out, skip = [], False
+    for line in text.splitlines():
+        l = line.strip().lower()
+        if l.startswith("```json"):
+            skip = True; continue
+        if l.startswith("```") and skip:
+            skip = False; continue
+        if not skip:
+            out.append(line)
+    cleaned = "\n".join(out).strip()
+    return cleaned or text.strip()
+# -------------------------------------
+
+# Load API key from .env if present
 try:
-    import config
-    config.setup_api_key()
+    from dotenv import load_dotenv
+    load_dotenv()
 except ImportError:
     pass
 
-# ANSI color codes
-class Colors:
-    HEADER = '\033[95m'
-    BLUE = '\033[94m'
-    CYAN = '\033[96m'
-    GREEN = '\033[92m'
-    YELLOW = '\033[93m'
-    RED = '\033[91m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-    END = '\033[0m'
-
-def print_step(message: str, step_num: Optional[int] = None):
-    if step_num:
-        print(f"\n{Colors.BOLD}{Colors.BLUE}[STEP {step_num}]{Colors.END} {Colors.CYAN}{message}{Colors.END}")
-    else:
-        print(f"{Colors.CYAN}{message}{Colors.END}")
-
-def print_success(message: str):
-    print(f"{Colors.GREEN}✓ {message}{Colors.END}")
-
-def print_error(message: str):
-    print(f"{Colors.RED}✗ ERROR: {message}{Colors.END}")
-
-def print_warning(message: str):
-    print(f"{Colors.YELLOW}⚠ {message}{Colors.END}")
-
-def print_info(message: str):
-    print(f"{Colors.CYAN}ℹ {message}{Colors.END}")
-
 def load_api_key():
-    """Load API key from environment or .env file"""
     api_key = os.environ.get('GOOGLE_API_KEY')
-    
     if api_key:
         print_success("API key loaded from environment variable")
         return api_key
-    
     env_file = Path('.env')
     if env_file.exists():
         try:
-            with open(env_file, 'r') as f:
-                for line in f:
-                    line = line.strip()
-                    if line.startswith('GOOGLE_API_KEY='):
-                        api_key = line.split('=', 1)[1].strip().strip('"').strip("'")
-                        os.environ['GOOGLE_API_KEY'] = api_key
-                        print_success("API key loaded from .env file")
-                        return api_key
+            for line in env_file.read_text(encoding='utf-8').splitlines():
+                line = line.strip()
+                if line.startswith('GOOGLE_API_KEY='):
+                    api_key = line.split('=', 1)[1].strip().strip('"').strip("'")
+                    os.environ['GOOGLE_API_KEY'] = api_key
+                    print_success("API key loaded from .env file")
+                    return api_key
         except Exception as e:
             print_warning(f"Could not read .env file: {e}")
-    
     print_error("Google API key not found!")
-    print("\nPlease set your API key using one of these methods:")
-    print("1. Environment variable:")
-    print("   export GOOGLE_API_KEY=\"your-api-key\"")
-    print("2. Create a .env file with:")
-    print("   GOOGLE_API_KEY=your-api-key")
-    print("\nGet your API key from: https://aistudio.google.com/app/apikey")
+    print("\nSet your API key via:")
+    print("1) export GOOGLE_API_KEY=\"your-api-key\"")
+    print("2) .env file: GOOGLE_API_KEY=your-api-key")
     sys.exit(1)
 
 def read_input_file(file_path: str) -> str:
-    """Read input file and return raw text"""
     print_step(f"Reading input from: {file_path}", 1)
-    
-    try:
-        path = Path(file_path)
-        if not path.exists():
-            print_error(f"Input file not found: {file_path}")
-            sys.exit(1)
-        
-        with open(path, 'r', encoding='utf-8') as f:
-            content = f.read()
-        
-        print_success(f"Loaded input ({len(content)} characters)")
-        return content
-    
-    except Exception as e:
-        print_error(f"Failed to read input file: {str(e)}")
-        sys.exit(1)
+    path = Path(file_path)
+    if not path.exists():
+        print_error(f"Input file not found: {file_path}"); sys.exit(1)
+    content = path.read_text(encoding='utf-8')
+    print_success(f"Loaded input ({len(content)} characters)")
+    return content
 
 def write_output_file(file_path: str, report_content: str):
-    """Write only the final report content to TXT file"""
     print_step(f"Writing output to: {file_path}")
-    
-    try:
-        path = Path(file_path)
-        
-        # Write only the report content, nothing else
-        with open(path, 'w', encoding='utf-8') as f:
-            f.write(report_content)
-        
-        print_success(f"Output written successfully")
-        print_info(f"Report length: {len(report_content)} characters")
-        
-    except Exception as e:
-        print_error(f"Failed to write output file: {str(e)}")
-        sys.exit(1)
+    Path(file_path).write_text(report_content, encoding='utf-8')
+    print_success("Output written successfully")
+    print_info(f"Report length: {len(report_content)} characters")
 
-def is_json_response(text: str) -> bool:
-    """Check if text is a JSON response from intermediate agents"""
-    text = text.strip()
-    # Check if it starts with JSON structure
-    if text.startswith('{') or text.startswith('['):
-        try:
-            json.loads(text)
-            return True
-        except:
-            pass
-    return False
-
-def extract_final_report(text: str) -> str:
-    """Extract only the natural language report, skip JSON data"""
-    lines = text.split('\n')
-    report_lines = []
-    skip_json = False
-    
-    for line in lines:
-        stripped = line.strip()
-        
-        # Skip JSON blocks
-        if stripped.startswith('{') or stripped.startswith('['):
-            skip_json = True
-            continue
-        
-        if skip_json:
-            if stripped.endswith('}') or stripped.endswith(']'):
-                skip_json = False
-            continue
-        
-        # Skip lines that look like JSON fields
-        if '"chunk_id"' in stripped or '"category"' in stripped or '"text"' in stripped:
-            continue
-        if '"software_name"' in stripped or '"version"' in stripped or '"document_type"' in stripped:
-            continue
-        if '"mappings"' in stripped or '"findings"' in stripped or '"solutions"' in stripped:
-            continue
-        
-        # Keep meaningful content
-        if stripped and not stripped.startswith('"'):
-            report_lines.append(line)
-    
-    return '\n'.join(report_lines).strip()
-
-def build_sequential_input(document_text: str) -> dict:
-    """
-    Build input for SequentialAgent.
-    For SequentialAgent, we need to provide the initial input that the first agent expects.
-    """
-    
+def build_dual_document_input(document_text: str) -> dict:
     doc_type = detect_document_type(document_text)
-    
     print_info(f"Document type detected: {doc_type}")
-    
     if doc_type == 'both':
-        print_success("Document contains both SRS and User Stories")
-        
-        # Split the document
+        print_success("Input appears to contain BOTH SRS and User Stories")
         split_result = split_combined_document(document_text)
-        
-        if split_result['has_both']:
-            srs_text = split_result['srs_text']
-            stories_text = split_result['stories_text']
-            
-            print_info(f"SRS section: {len(srs_text)} characters")
-            print_info(f"User Stories section: {len(stories_text)} characters")
-            
-            # For SequentialAgent, we provide structured input
-            # The first agent (preprocessor) expects DocumentInput
+        if split_result.get('has_both'):
             return {
-                "srs_document": srs_text,
-                "user_stories": stories_text,
-                "full_document": document_text
+                "srs_document": split_result['srs_text'],
+                "user_stories_document": split_result['stories_text'],
             }
-        else:
-            return {
-                "full_document": document_text
-            }
-    
-    else:
-        print_warning(f"Document appears to be {doc_type} only")
-        return {
-            "full_document": document_text
-        }
+        return {"srs_document": document_text, "user_stories_document": "No user stories found in the document."}
+    if doc_type == 'srs':
+        print_warning("Input appears to be SRS only")
+        return {"srs_document": document_text, "user_stories_document": "No user stories provided."}
+    if doc_type == 'user_stories':
+        print_warning("Input appears to be User Stories only")
+        return {"srs_document": "No SRS document provided.", "user_stories_document": document_text}
+    print_warning("Document type unclear; treating as SRS")
+    return {"srs_document": document_text, "user_stories_document": "No user stories provided."}
 
-async def process_documents_async(document_text: str) -> str:
-    """Process documents through the SequentialAgent and return only the final report"""
-    
-    print_step("Preparing Document for Analysis", 2)
-    
-    if not os.environ.get('GOOGLE_API_KEY'):
-        print_error("GOOGLE_API_KEY not set in environment!")
-        sys.exit(1)
-    
-    # Build input data
-    print_step("Building Analysis Input", 3)
-    input_data = build_sequential_input(document_text)
-    
-    # Build the prompt for SequentialAgent
-    prompt = f"""Please analyze this requirements document for CampusRide application.
+async def run_pipeline_and_collect(session_service, runner, user_id, session_id, prompt, verbose=False) -> str:
+    user_message = types.Content(role="user", parts=[types.Part(text=prompt)])
+    agent_counts = {}
+    all_text_parts = []
 
-The document contains BOTH SRS specifications and User Stories.
+    async for event in runner.run_async(user_id=user_id, session_id=session_id, new_message=user_message):
+        content = getattr(event, "content", None)
+        if not content:
+            continue
+        parts = getattr(content, "parts", []) or []
+        for part in parts:
+            fc = getattr(part, "function_call", None)
+            if fc:
+                name = getattr(fc, "name", None)
+                if name:
+                    agent_counts[name] = agent_counts.get(name, 0) + 1
+                    if verbose:
+                        print(f"{Colors.YELLOW}▶ Stage: {name}{Colors.END}")
+            fr = getattr(part, "function_response", None)
+            if fr and getattr(fr, "name", None) and verbose:
+                print(f"{Colors.GREEN}✓ Completed: {fr.name}{Colors.END}")
+            text_piece = getattr(part, "text", None)
+            if text_piece:
+                t = text_piece.strip()
+                if not is_json_response(t):
+                    all_text_parts.append(t)
 
-FULL DOCUMENT:
-═══════════════════════════════════════════════════════════════════════════
-{document_text}
-═══════════════════════════════════════════════════════════════════════════
+    if agent_counts:
+        print_info("Sub-agent executions:")
+        for k, v in agent_counts.items():
+            print(f"{Colors.GREEN}✓ {k}: {v}{Colors.END}")
 
-Please execute the complete requirements engineering analysis workflow:
+    final_report = "\n\n".join(all_text_parts).strip()
+    final_report = extract_final_report(final_report) or "Report generation returned empty content."
+    print_success("Pipeline finished")
+    return final_report
 
-1. Preprocess the SRS section and User Stories section separately
-2. Create traceability mappings between SRS and User Stories
-3. Inspect for conflicts, ambiguities, and gaps
-4. Generate architectural solutions and suggestions
-5. Coordinate all findings into a final prioritized report
-6. Generate a comprehensive natural language report
-
-IMPORTANT: At the end, provide ONLY the final natural language report from the report_generator_agent. 
-Do not include any JSON data or intermediate outputs. Just the readable report.
-"""
-    
-    print_success(f"Created prompt ({len(prompt)} characters)")
-    
-    # Setup ADK Runner
-    print_step("Initializing ADK Runner with SequentialAgent", 4)
-    
-    APP_NAME = "requirements_engineering"
-    USER_ID = "cli_user"
-    SESSION_ID = f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-    
-    session_service = InMemorySessionService()
-    
-    await session_service.create_session(
-        app_name=APP_NAME,
-        user_id=USER_ID,
-        session_id=SESSION_ID
-    )
-    
-    print_success(f"Session created: {SESSION_ID}")
-    
-    runner = Runner(
-        agent=root_agent,
-        app_name=APP_NAME,
-        session_service=session_service
-    )
-    
-    print_success("Runner initialized with SequentialAgent")
-    
-    # Execute the agent
-    print_step("Executing Requirements Engineering Pipeline", 5)
-    print(f"{Colors.YELLOW}⏳ Running sequential agent pipeline...{Colors.END}\n")
-    print_info("This will automatically execute all 6 agents in sequence\n")
-    
-    try:
-        user_message = types.Content(
-            role="user",
-            parts=[types.Part(text=prompt)]
-        )
-        
-        # Track execution
-        agent_calls = {
-            'preprocessor_agent': 0,
-            'mapper_agent': 0,
-            'inspector_agent': 0,
-            'architect_agent': 0,
-            'coordinator_agent': 0,
-            'report_generator_agent': 0
-        }
-        
-        all_text_parts = []
-        report_started = False
-        last_agent = None
-        
-        print(f"{Colors.CYAN}Pipeline stages:{Colors.END}")
-        print(f"  1. Preprocessing → 2. Mapping → 3. Inspection → 4. Architecture → 5. Coordination → 6. Report Generation")
-        print()
-        
-        async for event in runner.run_async(
-            user_id=USER_ID,
-            session_id=SESSION_ID,
-            new_message=user_message
-        ):
-            if hasattr(event, 'content'):
-                content = event.content
-                
-                if hasattr(content, 'parts'):
-                    for part in content.parts:
-                        # Track function calls
-                        if hasattr(part, 'function_call') and part.function_call:
-                            func_name = part.function_call.name
-                            if func_name in agent_calls:
-                                agent_calls[func_name] += 1
-                                last_agent = func_name
-                                print(f"{Colors.YELLOW}▶ Stage: {func_name}{Colors.END}")
-                                
-                                # Mark when report generator starts
-                                if func_name == 'report_generator_agent':
-                                    report_started = True
-                                    all_text_parts = []  # Clear previous outputs
-                        
-                        # Track completions
-                        if hasattr(part, 'function_response') and part.function_response:
-                            func_name = part.function_response.name
-                            if func_name in agent_calls:
-                                print(f"{Colors.GREEN}✓ Completed: {func_name}{Colors.END}")
-                        
-                        # Collect text responses ONLY after report_generator_agent starts
-                        if hasattr(part, 'text') and part.text:
-                            text_content = part.text.strip()
-                            if text_content:
-                                # Only collect if it's not JSON and looks like natural language
-                                if not is_json_response(text_content):
-                                    # Check if it contains report markers
-                                    if any(marker in text_content.lower() for marker in [
-                                        'executive summary', 'critical issues', 'priority',
-                                        'recommendations', 'analysis', 'findings',
-                                        'conflict', 'ambiguity', 'gap', 'enhancement'
-                                    ]):
-                                        all_text_parts.append(text_content)
-                                    # Or if report_generator_agent has already run
-                                    elif agent_calls.get('report_generator_agent', 0) > 0:
-                                        all_text_parts.append(text_content)
-            
-            elif hasattr(event, 'text') and event.text:
-                text_content = event.text.strip()
-                if text_content and not is_json_response(text_content):
-                    if agent_calls.get('report_generator_agent', 0) > 0:
-                        all_text_parts.append(text_content)
-        
-        # Combine collected text parts
-        if all_text_parts:
-            final_report = "\n\n".join(all_text_parts).strip()
-        else:
-            final_report = "No natural language report was generated. The pipeline may have only returned structured data."
-        
-        # Clean up any remaining JSON artifacts
-        final_report = extract_final_report(final_report)
-        
-        if not final_report:
-            print_warning("Pipeline completed but returned empty report")
-            final_report = "The pipeline executed successfully but did not generate a readable report."
-        
-        total_calls = sum(agent_calls.values())
-        
-        print()
-        print(f"{Colors.BOLD}{Colors.GREEN}{'='*70}{Colors.END}")
-        print(f"{Colors.BOLD}{Colors.GREEN}   SEQUENTIAL PIPELINE SUMMARY{Colors.END}")
-        print(f"{Colors.BOLD}{Colors.GREEN}{'='*70}{Colors.END}")
-        print()
-        
-        if total_calls > 0:
-            print(f"{Colors.CYAN}Sub-agent executions detected: {total_calls}{Colors.END}")
-            print()
-            for agent, count in agent_calls.items():
-                if count > 0:
-                    print(f"{Colors.GREEN}✓ {agent}: {count} execution(s){Colors.END}")
-        else:
-            print(f"{Colors.CYAN}Sequential pipeline executed as a single unit{Colors.END}")
-        
-        print()
-        print(f"{Colors.BOLD}{Colors.GREEN}✓ PIPELINE COMPLETE - Analysis generated successfully!{Colors.END}")
-        print()
-        
-        return final_report
-        
-    except Exception as e:
-        print_error(f"Pipeline execution failed: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        raise
+async def ask_follow_up_in_same_session(runner, user_id, session_id, question: str) -> str:
+    qa_message = types.Content(role="user", parts=[types.Part(text=question)])
+    chunks = []
+    async for ev in runner.run_async(user_id=user_id, session_id=session_id, new_message=qa_message):
+        c = getattr(ev, "content", None)
+        if not c:
+            continue
+        for p in getattr(c, "parts", []) or []:
+            if getattr(p, "text", None):
+                chunks.append(p.text)
+    return "\n".join(chunks).strip()
 
 def main():
-    """Main CLI entry point"""
     parser = argparse.ArgumentParser(
-        description="Requirements Engineering Agent - Sequential Pipeline Runner",
+        description="Requirements Engineering Agent - Sequential Pipeline Runner (EN-only, with Q&A)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
   python run_agent.py
-  python run_agent.py --input requirements.txt --output analysis.txt
-  python run_agent.py -i input.txt -o output.txt -v
-        """
+  python run_agent.py -i input.txt -o output.txt
+  python run_agent.py -i input.txt -o output.txt --ask "List critical conflicts"
+        """,
     )
-    
-    parser.add_argument(
-        '--input', '-i',
-        default='input.txt',
-        help='Input file path (default: input.txt)'
-    )
-    
-    parser.add_argument(
-        '--output', '-o',
-        default='output.txt',
-        help='Output file path (default: output.txt)'
-    )
-    
-    parser.add_argument(
-        '--verbose', '-v',
-        action='store_true',
-        help='Enable verbose output'
-    )
-    
+    parser.add_argument('--input', '-i', default='input.txt', help='Input file path (default: input.txt)')
+    parser.add_argument('--output', '-o', default='output.txt', help='Output file path (default: output.txt)')
+    parser.add_argument('--verbose', '-v', action='store_true', help='Enable verbose output')
+    parser.add_argument('--ask', help='Ask a follow-up question in the SAME session (uses query_handler_agent)')
     args = parser.parse_args()
-    
-    # Print header
+
     print(f"\n{Colors.BOLD}{Colors.HEADER}{'='*70}{Colors.END}")
-    print(f"{Colors.BOLD}{Colors.HEADER}   Requirements Engineering - Sequential Pipeline{Colors.END}")
+    print(f"{Colors.BOLD}{Colors.HEADER}   Requirements Engineering - Sequential Pipeline (EN){Colors.END}")
     print(f"{Colors.BOLD}{Colors.HEADER}{'='*70}{Colors.END}\n")
-    
     print(f"Input:  {args.input}")
-    print(f"Output: {args.output}")
-    print()
-    
-    # Check and load API key
+    print(f"Output: {args.output}\n")
+
     load_api_key()
-    print()
-    
+
     try:
-        # Step 1: Read input
         document_text = read_input_file(args.input)
-        
-        # Step 2-5: Process through sequential pipeline
-        final_report = asyncio.run(process_documents_async(document_text))
-        
-        # Step 6: Write output (only the report content)
+
+        # Build prompt
+        print_step("Preparing document for analysis", 2)
+        input_data = build_dual_document_input(document_text)
+        prompt = f"""You are a Requirements Engineering pipeline. Perform the complete workflow below.
+LANGUAGE LOCK: Use ENGLISH for all explanations and headings. Never translate or modify any quoted sentences from the original documents—preserve exact wording.
+
+SRS DOCUMENT:
+═══════════════════════════════════════════════════════════════════════
+{input_data['srs_document']}
+═══════════════════════════════════════════════════════════════════════
+
+USER STORIES DOCUMENT:
+═══════════════════════════════════════════════════════════════════════
+{input_data['user_stories_document']}
+═══════════════════════════════════════════════════════════════════════
+
+Execute:
+1) Preprocess SRS & User Stories separately
+2) Create traceability mappings
+3) Inspect conflicts/ambiguities/gaps/quality issues
+4) Propose architectural solutions & enhancement suggestions
+5) Coordinate into a prioritized final report
+6) Generate a comprehensive natural-language MARKDOWN report
+
+IMPORTANT OUTPUT RULES:
+- Provide ONLY the final markdown report in ENGLISH.
+- Do NOT output JSON or intermediate objects.
+- When quoting from the source, keep the exact original text (no translation, no paraphrasing).
+"""
+        print_success(f"Created prompt ({len(prompt)} characters)")
+
+        # One session & one runner for both pipeline and follow-up Q&A
+        print_step("Initializing ADK Runner (root agent = requirement_engineer_agent)", 3)
+        APP_NAME = "requirements_engineering"
+        USER_ID = "cli_user"
+        SESSION_ID = f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+
+        session_service = InMemorySessionService()
+        # IMPORTANT: create session BEFORE runner usage
+        asyncio.run(session_service.create_session(app_name=APP_NAME, user_id=USER_ID, session_id=SESSION_ID))
+        runner = Runner(agent=root_agent, app_name=APP_NAME, session_service=session_service)
+        print_success(f"Session created: {SESSION_ID}")
+        print_success("Runner initialized")
+
+        print_step("Executing pipeline", 4)
+        final_report = asyncio.run(
+            run_pipeline_and_collect(session_service, runner, USER_ID, SESSION_ID, prompt, args.verbose)
+        )
         write_output_file(args.output, final_report)
-        
-        # Final summary
+
+        # Optional follow-up Q&A in the SAME session
+        if args.ask:
+            print_step("Follow-up Q&A (same session)", 5)
+            answer = asyncio.run(ask_follow_up_in_same_session(runner, USER_ID, SESSION_ID, args.ask))
+            print_success("Q&A Answer:")
+            print(answer or "(empty)")
+
         print(f"\n{Colors.BOLD}{Colors.GREEN}{'='*70}{Colors.END}")
         print(f"{Colors.BOLD}{Colors.GREEN}   ✓ ANALYSIS COMPLETE{Colors.END}")
         print(f"{Colors.BOLD}{Colors.GREEN}{'='*70}{Colors.END}\n")
-        
         print(f"{Colors.CYAN}Results saved to: {args.output}{Colors.END}")
         print(f"{Colors.CYAN}Report length: {len(final_report)} characters{Colors.END}")
-        print(f"{Colors.GREEN}Status: Sequential pipeline executed successfully{Colors.END}")
-        print()
-        
+        print(f"{Colors.GREEN}Status: Sequential pipeline executed successfully{Colors.END}\n")
+
     except KeyboardInterrupt:
-        print_warning("\n\nProcess interrupted by user")
+        print_warning("\nProcess interrupted by user")
         sys.exit(1)
     except Exception as e:
-        print_error(f"\n\nFatal error: {str(e)}")
-        if args.verbose:
-            import traceback
-            traceback.print_exc()
+        print_error(f"\nFatal error: {str(e)}")
+        import traceback; traceback.print_exc()
         sys.exit(1)
 
 if __name__ == "__main__":
