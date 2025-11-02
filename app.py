@@ -233,13 +233,14 @@ def process_prompt():
     # 5. Tạo phản hồi cho Frontend
     source_type = "tệp tin" if is_file_input else "câu lệnh"
     ai_response = (
-        f"✅ **Phân tích {source_type} (Bước {message_count}) hoàn tất!**\n\n"
+        f"✅ Phân tích {source_type} (Bước {message_count}) hoàn tất!\n\n"
         f"Tôi đã đọc nội dung, xử lý và lưu trữ thành công.\n"
         f"Thông tin đã lưu trên Server:\n"
-        f"- **File Gốc Tuần Tự (.txt):** `{os.path.basename(saved_raw_file_sequential)}`\n"
-        f"- **File Ghi Đè (input.txt):** `{saved_raw_file_current}`\n"
-        f"- **File Cấu Trúc (JSON):** `{os.path.basename(saved_json_file)}`\n"
-        f"- **Báo cáo phân tích:** Đang tạo nội dung mẫu trong `output.txt`."
+        f"- File Gốc Tuần Tự (.txt): {os.path.basename(saved_raw_file_sequential)}\n"
+        f"- File Ghi Đè (input.txt): {saved_raw_file_current}\n"
+        f"- File Cấu Trúc (JSON): {os.path.basename(saved_json_file)}\n"
+        f"- Báo cáo phân tích: Đang tạo nội dung mẫu trong output.txt."
+        f"- Hãy chờ 2 phút nhé!\n"
     )
     # --- KẾT THÚC MÔ PHỎNG LUỒNG AGENT ---
 
