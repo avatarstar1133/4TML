@@ -1,0 +1,28 @@
+Online Food Ordering System
+Version 1.0
+Date: November 2, 2025
+
+1. Purpose
+This document specifies the requirements for an Online Food Ordering System that allows customers to place and manage food orders through a website and mobile app.
+
+2. Scope
+The system enables customers to browse restaurant menus, place orders, and make payments. Restaurants can receive and process orders through their management dashboard.
+
+3. Functional Requirements
+
+FR1: Users can register, log in, and view past orders.
+FR2: Users can only place orders after payment is confirmed.
+FR3: The system shall allow users to pay after delivery to ensure satisfaction.
+FR4: Restaurants can update menu items and set availability status.
+FR5: The admin can remove any restaurant from the system.
+
+4. Non-Functional Requirements
+
+NFR1: The system should process all orders in under 3 seconds.
+NFR2: The system must be accessible on both web and mobile platforms.
+
+User Story 1:As a customer, I want to pay online before ordering so that my order is processed immediately.
+User Story 2:As a customer, I want to pay after I receive my food so I can make sure it’s correct and fresh.
+User Story 3:As a restaurant owner, I want to automatically reject unpaid orders to avoid fake or spam orders.
+User Story 4:As a restaurant owner, I want the system to auto-accept all orders so customers don’t have to wait for manual confirmation.
+User Story 5:As an admin, I want to allow restaurants to temporarily close during off-hours but also keep accepting pre-orders anytime.

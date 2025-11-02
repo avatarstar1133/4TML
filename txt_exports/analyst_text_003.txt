@@ -1,0 +1,64 @@
+SRS: CampusRide – University Carpool System (v1.2)
+
+1. Introduction
+The CampusRide system allows university students and staff to share rides between campuses safely and efficiently.
+The system aims to reduce parking demand, promote sustainability, and improve social connectivity within the campus community.
+
+2. Functional Requirements (FR):
+
+FR1: The system shall allow users to register with a university email address and password.
+
+FR2: The system shall verify users’ email addresses before granting full access.
+
+FR3: The system shall allow drivers to publish available rides with route, time, and number of seats.
+
+FR4: The system shall allow passengers to search for rides based on location, time, and driver rating.
+
+FR5: The system shall support in-app booking and ride confirmation.
+
+FR6: The system shall notify users via email and in-app alerts when a booking is accepted or cancelled.
+
+FR7: The system shall allow users to cancel their booking up to 30 minutes before departure.
+
+FR8: The system shall record trip history for both drivers and passengers.
+
+3. Non-Functional Requirements (NFR):
+
+NFR1: The system shall maintain a response time of less than 2 seconds for all searches.
+
+NFR2: The system shall maintain 99.8% uptime.
+
+NFR3: The system shall encrypt all user data in transit and at rest.
+
+NFR4: The system shall be available on both mobile and web platforms.
+
+NFR5: The interface shall follow the university accessibility standards (AA level).
+
+4. Constraints & Dependencies
+
+The system depends on the University LDAP for identity verification.
+
+GPS and internet connectivity are required for live route tracking.
+
+USER STORIES: CampusRide – Role-Based Scenarios
+
+User Story 1:
+As a student, I want to register with my university email so that I can join the CampusRide network safely.
+
+User Story 2:
+As a driver, I want to publish a ride with route and available seats so that other students can join my trip easily.
+
+User Story 3:
+As a passenger, I want to search for rides by location and time so that I can find convenient trips quickly.
+
+User Story 4:
+As a user, I want to receive in-app and email notifications when my booking status changes so that I stay informed about my ride.
+
+User Story 5:
+As a passenger, I want to cancel my booking up to 30 minutes before departure so that I can manage my schedule responsibly.
+
+User Story 6:
+As an administrator, I want to review trip history and user reports so that I can ensure safety and compliance.
+
+User Story 7:
+As a security officer, I want to monitor user registration logs so that I can detect suspicious activity.
