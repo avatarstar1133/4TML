@@ -1,104 +1,102 @@
 # REQUIREMENTS ENGINEERING ANALYSIS REPORT
 
 ## Executive Summary
-This report analyzes the Software Requirements Specification (SRS) and User Stories for the Online Food Ordering System. It identifies critical conflicts, missing requirements, and areas for enhancement. The analysis highlights a critical conflict in payment options, a lack of security and scalability considerations, and several gaps in functional requirements. Addressing these issues is crucial for the successful development and deployment of a reliable and user-friendly system.
+This report analyzes the Software Requirements Specification (SRS) and User Stories for the CampusRide system (v1.2). It identifies critical gaps, high and medium priority issues, and enhancement suggestions. The analysis highlights the need for improved security measures, enhanced functional requirements, and better alignment with user stories to ensure a robust and user-friendly carpool system.
 
 ## Critical Issues
-*   **Conflict in Payment Options:**
-    *   **Problem:** "FR2 states that users can only place orders after payment is confirmed, while FR3 states that the system shall allow users to pay after delivery. These two requirements directly contradict each other regarding the timing of payment."
-    *   **Action:** The SRS needs to clarify the payment options and order flow. Define different 'order types'. One order type requires pre-payment, and another allows payment after delivery. Modify FR2 to state: 'For \'prepaid\' orders, users can only place orders after payment is confirmed.' Modify FR3 to state: 'For \'pay on delivery\' orders, the system shall allow users to pay after delivery to ensure satisfaction.'
-    *   **Sources:** SRS-004, SRS-005
-    *   **Impact:** The system cannot simultaneously enforce payment before order placement and allow payment after delivery, leading to a fundamental design flaw and user confusion. This will cause incorrect order processing and financial discrepancies.
+
+*   **Missing Payment Processing:** The SRS lacks any functional requirements for payment processing or fare calculation. This is a critical omission as it directly impacts the viability of the system by failing to address how drivers will be compensated or how fares will be determined.
+    *   **Action:** Add the following functional requirements: FR12: 'The system shall support secure payment processing for ride fares.' FR13: 'The system shall provide a mechanism for calculating ride fares based on distance, time, and other relevant factors.' FR14: 'The system shall allow drivers to set their preferred payment methods and receive compensation for completed rides.'
+    *   **Impact:** Without payment processing, the system's viability is questionable, as drivers need an incentive to offer rides and passengers need a convenient way to pay.
 
 ## High Priority Issues
-*   **Missing Security Requirements:**
-    *   **Problem:** "The document lacks critical Non-Functional Requirements, specifically regarding security. There are no requirements addressing data encryption, user authentication security, or protection against common web vulnerabilities."
-    *   **Action:** Add the following Non-Functional Requirements related to security: 'NFR3: All sensitive data (e.g., user credentials, payment information) must be encrypted both in transit (using HTTPS) and at rest (using AES-256 or similar). NFR4: The system must implement robust user authentication and authorization mechanisms to prevent unauthorized access. NFR5: The system must be protected against common web vulnerabilities such as SQL injection, cross-site scripting (XSS), and cross-site request forgery (CSRF).'
-    *   **Sources:** SRS-008, SRS-009
-    *   **Impact:** The absence of security requirements exposes the system to significant risks, including data breaches, unauthorized access, and financial fraud. This can result in reputational damage, legal liabilities, and loss of user trust.
-*   **Missing Role-Based Access Control:**
-    *   **Problem:** Missing Role-Based Access Control
-    *   **Action:** Implement role-based access control (RBAC) to restrict access to sensitive functionalities based on user roles (e.g., admin, restaurant owner, customer).
-    *   **Sources:** None
-    *   **Impact:** RBAC is crucial for preventing unauthorized access and maintaining data integrity.
-*   **Missing Detailed Logging and Auditing:**
-    *   **Problem:** Missing Detailed Logging and Auditing
-    *   **Action:** Implement detailed logging and auditing of all system events, including user logins, order placements, payment transactions, and admin actions.
-    *   **Sources:** None
-    *   **Impact:** Logging and auditing are essential for detecting and investigating security breaches, as well as ensuring compliance with regulatory requirements.
-*   **Missing NFR for data backup and recovery procedures:**
-    *   **Problem:** Missing NFR for data backup and recovery procedures
-    *   **Action:** Add NFR for data backup and recovery procedures including frequency and retention periods.
-    *   **Sources:** None
-    *   **Impact:** In case of data loss, the system should have well-defined backup and recovery strategies.
+
+*   **Enhancement: Implement Multi-Factor Authentication (MFA):** The SRS does not explicitly require multi-factor authentication.
+    *   **Action:** Implement multi-factor authentication (MFA) for user logins.
+    *   **Impact:** Enhances account security by requiring multiple forms of verification, reducing the risk of unauthorized access.
+*   **Enhancement: Data Privacy Compliance:** The SRS does not explicitly address compliance with data privacy regulations.
+    *   **Action:** Ensure compliance with relevant data privacy regulations (e.g., GDPR, CCPA).
+    *   **Impact:** Protects user data and avoids legal penalties.
 
 ## Medium Priority Issues
-*   **Missing Order Cancellation Details:**
-    *   **Problem:** "The functional requirements lack details about order cancellation. It is not specified whether users or restaurants can cancel orders, and under what conditions."
-    *   **Action:** Add functional requirements specifying the conditions under which orders can be cancelled by users and restaurants. For example: 'FR6: Users can cancel orders within 15 minutes of placement, unless the restaurant has already marked the order as \'preparing\'. FR7: Restaurants can cancel orders if an item is out of stock, or if they are unable to fulfill the order due to unforeseen circumstances. A notification must be sent to the user upon cancellation.'
-    *   **Sources:** SRS-003, SRS-004, SRS-005, SRS-006, SRS-007
-    *   **Impact:** Without a defined order cancellation policy, the system may face disputes and inefficiencies in managing user requests and restaurant operations. It can lead to revenue loss or user dissatisfaction.
-*   **Missing Restaurant Onboarding Process:**
-    *   **Problem:** "The SRS does not specify how restaurants are added to the system initially. FR5 only describes the admin removing restaurants, but not how they are onboarded."
-    *   **Action:** Add a functional requirement detailing the restaurant onboarding process: 'FR8: The system shall allow restaurants to register and create a profile, including providing necessary business information and menu details. Admin approval is required before a restaurant can start accepting orders.'
-    *   **Sources:** SRS-007
-    *   **Impact:** The system lacks a clear process for adding new restaurants, hindering the growth and scalability of the platform. This prevents new restaurants from joining and offering their services.
-*   **Missing Refund Policy and Dispute Resolution:**
-    *   **Problem:** "There is no mention of refund policy or dispute resolution in the SRS, which is important for user satisfaction. What if the order is wrong or not delivered?"
-    *   **Action:** Add functional requirements outlining the refund policy and dispute resolution process: 'FR9: The system shall provide a mechanism for users to report issues with their orders (e.g., incorrect items, missing items, late delivery). FR10: The system shall define a clear refund policy, outlining the conditions under which a refund will be issued (e.g., order not delivered, significantly incorrect order). FR11: The system shall provide a dispute resolution process, involving mediation by the admin if necessary, to resolve conflicts between users and restaurants.'
-    *   **Sources:** SRS-001, SRS-002
-    *   **Impact:** Lack of a clear refund policy and dispute resolution mechanism can lead to user dissatisfaction and legal issues. This reduces user trust and can lead to negative reviews.
-*   **Missing Specific Payment Methods:**
-    *   **Problem:** "The system requirements do not define the specific payment methods supported (e.g., credit card, PayPal, mobile payment)."
-    *   **Action:** Add a functional requirement specifying the supported payment methods: 'FR12: The system shall support the following payment methods: Credit Card (Visa, Mastercard, American Express), PayPal, and \\[mention any other mobile payment options].'
-    *   **Sources:** SRS-002, SRS-004, SRS-005
-    *   **Impact:** The absence of defined payment methods limits the system's flexibility and may exclude potential users who prefer specific payment options. This can lead to reduced sales and user adoption.
-*   **Missing Scalability Requirements:**
-    *   **Problem:** "The document lacks scalability requirements. There's no mention of how many concurrent users or orders the system should handle."
-    *   **Action:** Add Non-Functional Requirements addressing scalability: 'NFR6: The system shall be able to handle at least 1000 concurrent users without significant performance degradation. NFR7: The system shall be able to process at least 500 orders per minute during peak hours.'
-    *   **Sources:** SRS-008
-    *   **Impact:** Without defined scalability requirements, the system may not be able to handle peak loads or future growth, leading to performance issues and user dissatisfaction as the user base grows.
-*   **Missing system health dashboard:**
-    *   **Problem:** Missing system health dashboard
-    *   **Action:** Implement a system health dashboard to monitor key performance indicators (KPIs) such as response time, error rate, and resource utilization.
-    *   **Sources:** None
-    *   **Impact:** A system health dashboard allows for proactive identification and resolution of performance issues.
-*   **Missing automated testing:**
-    *   **Problem:** Missing automated testing
-    *   **Action:** Implement automated testing (unit tests, integration tests, and end-to-end tests) to ensure the quality and reliability of the system.
-    *   **Sources:** None
-    *   **Impact:** Automated testing helps to detect and prevent defects, reducing the risk of system failures.
-*   **System not designed for extensibility and maintainability:**
-    *   **Problem:** System not designed for extensibility and maintainability
-    *   **Action:** Design the system to be easily extensible and maintainable by using modular architecture and well-defined interfaces.
-    *   **Sources:** None
-    *   **Impact:** A modular design reduces the complexity of the system and makes it easier to add new features or modify existing ones.
-*   **Missing data retention policies:**
-    *   **Problem:** Missing data retention policies
-    *   **Action:** Specify data retention policies defining how long user data and order history will be stored.
-    *   **Sources:** None
-    *   **Impact:** Needed for compliance with data privacy regulations such as GDPR.
+
+*   **Gap: Administrative Review of Trip History:** The SRS lacks a functional requirement detailing how administrators review trip history and user reports, as stated in STORY-006. While SRS-009 mentions recording trip history, it doesn't specify administrative access or reporting capabilities.
+    *   **Action:** Add a functional requirement (FR9): 'The system shall provide administrators with the ability to review trip history and generate user reports for monitoring safety and compliance.'
+    *   **Impact:** Administrators might not have the necessary tools or access to ensure safety and compliance, hindering their ability to manage the system effectively.
+*   **Gap: Security Officer Monitoring of User Registration Logs:** There is no functional requirement to address the security officer's need to monitor user registration logs, as outlined in STORY-007. SRS-003 verifies email addresses but doesn't cover continuous monitoring for suspicious activity.
+    *   **Action:** Add a functional requirement (FR10): 'The system shall provide a security officer with the ability to monitor user registration logs for suspicious activities.'
+    *   **Impact:** The system's security could be compromised if suspicious registration activities are not actively monitored, potentially leading to unauthorized access or misuse.
+*   **Missing NFR: Security Logging and Auditing:** There is no explicit Non-Functional Requirement (NFR) specifying security logging or auditing capabilities to meet the needs of the security officer, as described in STORY-007. While NFR3 mentions data encryption, it does not address logging and monitoring access for security purposes.
+    *   **Action:** Add a non-functional requirement (NFR6): 'The system shall maintain a comprehensive audit log of all user registration and access activities, accessible to authorized security personnel for monitoring and analysis.'
+    *   **Impact:** Lack of security logging hinders the system's ability to detect and respond to security breaches or unauthorized access attempts, making it difficult to maintain a secure environment.
+*   **Enhancement: Regular Security Audits:** The SRS does not explicitly call for regular security audits.
+    *   **Action:** Implement regular security audits and penetration testing.
+    *   **Impact:** Proactively identifies and addresses security vulnerabilities before they can be exploited.
+*   **Enhancement: Scalability:** The SRS does not explicitly address scalability.
+    *   **Action:** Design the system to be scalable to accommodate a growing number of users and rides.
+    *   **Impact:** Ensures the system can handle increasing demand without performance degradation.
+*   **Enhancement: System Monitoring and Alerting:** The SRS does not explicitly address system monitoring and alerting.
+    *   **Action:** Implement monitoring and alerting for system performance and errors.
+    *   **Impact:** Enables rapid detection and resolution of issues, minimizing downtime and ensuring system stability.
+*   **Enhancement: Rating and Review System:** The SRS does not include a system for rating and reviewing users.
+    *   **Action:** Implement a system for rating and reviewing drivers and passengers.
+    *   **Impact:** Helps to build trust and accountability within the system, improving overall user experience and safety.
+*   **Enhancement: Automated Backups and Disaster Recovery:** The SRS does not explicitly address backup and disaster recovery.
+    *   **Action:** Implement automated backups and disaster recovery procedures.
+    *   **Impact:** Ensures data is protected and the system can be restored quickly in the event of a failure.
+*   **Incompleteness: Ride Details:** FR3 only mentions route, time, and number of seats for publishing rides. It does not specify other important information like pickup/drop-off locations, price, or vehicle details.
+    *   **Action:** Modify FR3 to read: 'The system shall allow drivers to publish available rides with route, time, number of seats, specific pickup and drop-off locations, price per seat, and vehicle details (e.g., make, model, color).' Also, consider adding a functional requirement to allow drivers to specify ride preferences, such as whether they allow smoking or pets.
+    *   **Impact:** Incomplete ride information can lead to confusion and inconvenience for passengers, potentially reducing the usability and adoption of the system.
+*   **Gap: User Profile Management:** The system lacks a functional requirement for user profile management. While FR1 and FR2 address registration and verification, there's no mention of users being able to update their profile information, such as contact details or preferences.
+    *   **Action:** Add a functional requirement (FR11): 'The system shall allow users to manage their profile information, including contact details (phone number, alternate email), profile picture and ride preferences (e.g., preferred communication method, notification preferences).'
+    *   **Impact:** The absence of user profile management hinders the ability to maintain accurate user information and customize the user experience, potentially leading to dissatisfaction.
+*   **Missing NFR: Security Measures:** There is no specific NFR related to security aspects beyond data encryption. Aspects like authorization, authentication strength (e.g., multi-factor authentication), and protection against common web vulnerabilities (e.g., OWASP Top 10) are not addressed.
+    *   **Action:** Add a non-functional requirement (NFR7): 'The system shall implement robust security measures, including strong authentication (e.g., multi-factor authentication), authorization controls, and protection against common web vulnerabilities as defined by the OWASP Top 10.'
+    *   **Impact:** The system is vulnerable to various security threats, potentially exposing user data and compromising the integrity of the application.
 
 ## Enhancement Suggestions (Low)
-N/A
+
+*   **Usability: Clear Error Messages:** The SRS does not specify the quality of error messages.
+    *   **Action:** Provide clear and concise error messages to users.
+    *   **Impact:** Improves the user experience by helping users understand and resolve issues quickly.
+*   **Gap: User Roles and Permissions:** The system lacks a functional requirement detailing user roles and permissions. While user stories mention administrators and security officers, there's no specification of their access privileges or responsibilities within the functional requirements.
+    *   **Action:** Add a functional requirement (FR15): 'The system shall define and enforce different user roles with specific access privileges, including roles for administrators, security officers, drivers, and passengers.'
+    *   **Impact:** Without defined user roles and permissions, the system might not be secure or manageable, potentially leading to unauthorized access or operational inefficiencies.
 
 ## Traceability Analysis
-*   STORY-001 (As a customer, I want to pay online before ordering so that my order is processed immediately.) maps to SRS-004 (Users can only place orders after payment is confirmed.).
-*   STORY-002 (As a customer, I want to pay after I receive my food so I can make sure it’s correct and fresh.) maps to SRS-005 (The system shall allow users to pay after delivery to ensure satisfaction.).
-*   STORY-003 (As a restaurant owner, I want to automatically reject unpaid orders to avoid fake or spam orders.) maps to SRS-004 (Users can only place orders after payment is confirmed.).
-*   STORY-005 (As an admin, I want to allow restaurants to temporarily close during off-hours but also keep accepting pre-orders anytime.) maps to SRS-006 (Restaurants can update menu items and set availability status.).
-*   The following SRS items are orphaned: SRS-001, SRS-002, SRS-003, SRS-006, SRS-007, SRS-008, SRS-009.
-*   The following stories are orphaned: STORY-004.
+
+| User Story ID | SRS ID(s) | Confidence |
+| :------------ | :-------- | :--------- |
+| STORY-001     | SRS-002   | 0.95       |
+| STORY-002     | SRS-004   | 0.95       |
+| STORY-003     | SRS-005   | 0.95       |
+| STORY-004     | SRS-007   | 0.95       |
+| STORY-005     | SRS-008   | 0.95       |
+| STORY-006     | SRS-009   | 0.85       |
+| STORY-007     | SRS-003   | 0.75       |
+
+**Orphaned SRS Requirements:**
+
+*   SRS-001
+*   SRS-006
+*   SRS-010
+*   SRS-011
+*   SRS-012
+*   SRS-013
+*   SRS-014
+*   SRS-015
+*   SRS-016
+
+The SRS coverage based on the provided User Stories is 43.75%.
 
 ## Recommendations & Next Steps
-1.  **Address the Critical Conflict:** Resolve the conflicting payment options by defining different order types in the SRS and adjusting FR2 and FR3 accordingly.
-2.  **Incorporate Security Requirements:** Immediately add the suggested security-related Non-Functional Requirements (NFR3, NFR4, NFR5) to protect the system and user data.
-3.  **Define Order Cancellation Policy:** Add functional requirements (FR6, FR7) detailing the conditions for order cancellations by users and restaurants.
-4.  **Specify Restaurant Onboarding Process:** Include a functional requirement (FR8) describing how restaurants are added to the system initially.
-5.  **Establish Refund and Dispute Resolution Mechanisms:** Add functional requirements (FR9, FR10, FR11) outlining the refund policy and dispute resolution process.
-6.  **List Supported Payment Methods:** Add a functional requirement (FR12) specifying the payment methods supported by the system.
-7.  **Define Scalability Requirements:** Add Non-Functional Requirements (NFR6, NFR7) addressing the system's scalability in terms of concurrent users and order processing capacity.
-8.  **Enhance Security**: Implement role-based access control and detailed logging and auditing. Add data backup and recovery procedures.
-9.  **Improve Maintainability**: Implement a system health dashboard, automated testing, modular design, and well-defined interfaces.
-10. **Ensure Compliance:** Specify data retention policies.
-11. **Improve Traceability:** Review the orphaned SRS items and User Stories to determine if they are still relevant and, if so, map them appropriately.
+
+1.  **Address Critical Gaps:** Immediately address the lack of payment processing requirements by adding the suggested functional requirements (FR12, FR13, FR14).
+2.  **Implement High-Priority Enhancements:** Prioritize the implementation of multi-factor authentication and ensure compliance with data privacy regulations.
+3.  **Incorporate Medium-Priority Requirements:** Add the functional and non-functional requirements related to administrative review, security officer monitoring, and security logging.  Also, enhance FR3 with detailed pickup/drop-off information and add user profile management functionality (FR11).
+4.  **Define User Roles:** Implement user roles and permissions to improve system manageability and security.
+5.  **Review Orphaned SRS Requirements:** Determine whether the orphaned SRS requirements (SRS-001, SRS-006, SRS-010, SRS-011, SRS-012, SRS-013, SRS-014, SRS-015, SRS-016) are still valid and necessary. If so, consider creating user stories to cover those requirements.
+6.  **Increase Test Coverage:** Write new user stories to cover currently orphaned SRS requirements to increase test coverage.
+7.  **Update SRS:** Update the SRS document to include all the new functional and non-functional requirements.
+
+By addressing these issues, the CampusRide system can become more robust, secure, and user-friendly, ultimately leading to higher adoption rates and greater satisfaction among university students and staff.

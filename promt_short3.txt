@@ -1,0 +1,56 @@
+User Stories — Online Bookstore System (TEST FIXTURE) v2.2
+
+(These stories intentionally include a few inconsistencies to help conflict-detection logic.)
+
+AUTHENTICATION & SECURITY
+US-AUTH-01
+As a visitor, I want to create an account with my email and a password so that I can purchase books.
+Acceptance:
+- Given I enter a valid email and password, when I submit registration, then my account is created and a verification email is sent.
+- Password policy: min length 8, at least 1 digit.
+
+US-AUTH-02
+As a new customer, I want to log in right after registration without email verification so that I can explore paid features quickly.
+Acceptance:
+- Login is allowed immediately after sign-up (email verification can be done later).
+(Conflict with SRS FR1.2 which blocks login until verified.)
+
+SESSION
+US-SEC-03
+As a customer, I want my session to stay alive for at least 15 minutes of inactivity so that I am not logged out too quickly.
+Acceptance:
+- Auto logout threshold ≥ 15 minutes.
+(Conflict with SRS FR2.3: 10 minutes.)
+
+PERFORMANCE & OPERATIONS
+US-PERF-01
+As a product owner, I consider any p95 response time under 3 seconds acceptable for search and checkout.
+(Conflicts with SRS: Search p95 < 1.5s, Checkout p95 < 2s.)
+
+US-OPS-01
+As an operations manager, I want monthly availability to be at least 99.5% so that maintenance windows are simpler.
+(Conflicts with SRS NFR2.1: 99.9%.)
+
+PRIVACY
+US-PRIV-02
+As an analyst, I need to retain the full IP addresses of EU customers for fraud analytics for 90 days.
+(Conflicts with SRS NFR3.3 which mandates masking IP addresses for EU traffic.)
+
+INVENTORY
+US-INV-02
+As an admin, I want to allow negative stock values temporarily to support backorders during peak sales.
+(Conflicts with SRS FR5.3 which prohibits negative stock.)
+
+CATALOG & SEARCH
+US-SRCH-01
+As a visitor, I want to search by ISBN so that I can find exact editions.
+Acceptance:
+- Results include exact matches on ISBN.
+- Results are paginated with default page size = 20.
+
+CHECKOUT
+US-CHK-01
+As a customer, I want to pay by credit card or cash on delivery so that I can choose a preferred method.
+Acceptance:
+- COD available for domestic shipping.
+- Card payments are tokenized; no full PAN stored.

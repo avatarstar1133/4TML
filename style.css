@@ -11,6 +11,8 @@
     --gradient-primary: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
     --border-color: #e4e6eb;
     --card-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    --code-bg: #f6f8fa;
+    --code-border: #e1e4e8;
 }
 
 body.dark-theme {
@@ -24,6 +26,8 @@ body.dark-theme {
     --gradient-primary: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
     --border-color: #3a3b3c;
     --card-shadow: 0 6px 20px rgba(102, 252, 241, 0.1);
+    --code-bg: #2d3748;
+    --code-border: #4a5568;
 }
 
 * {
@@ -151,6 +155,7 @@ h3::after {
     width: 100%;
     text-align: center;
 }
+
 body.dark-theme .button, body.dark-theme .button-small {
     box-shadow: 0 4px 15px rgba(102, 252, 241, 0.2);
     color: #0b0c10;
@@ -160,6 +165,7 @@ body.dark-theme .button, body.dark-theme .button-small {
     transform: translateY(-3px);
     box-shadow: 0 6px 20px rgba(0,0,0,0.15);
 }
+
 body.dark-theme .button:hover, body.dark-theme .button-small:hover {
     box-shadow: 0 6px 20px rgba(102, 252, 241, 0.4);
 }
@@ -173,7 +179,6 @@ body.dark-theme .button:hover, body.dark-theme .button-small:hover {
     border-radius: 15px;
 }
 
-/* CSS cho Nút Tải File mới được thêm */
 .file-download-button {
     background: var(--bg-primary);
     color: var(--accent-secondary);
@@ -191,10 +196,10 @@ body.dark-theme .file-download-button {
 .file-download-button:hover {
     background: var(--bg-global);
 }
+
 body.dark-theme .file-download-button:hover {
     background: var(--bg-global);
 }
-/* Kết thúc CSS cho Nút Tải File */
 
 .app-layout {
     display: flex;
@@ -335,6 +340,94 @@ body.dark-theme .message.ai {
     backdrop-filter: blur(5px);
 }
 
+/* === MARKDOWN STYLING === */
+.message.formatted-message {
+    max-width: 90%;
+    padding: 20px 25px;
+    font-size: 0.95em;
+}
+
+.formatted-message .md-h1 {
+    font-size: 1.8em;
+    font-weight: 700;
+    margin: 20px 0 15px 0;
+    padding-bottom: 10px;
+    border-bottom: 3px solid var(--accent-primary);
+    color: var(--accent-primary);
+}
+
+.formatted-message .md-h2 {
+    font-size: 1.5em;
+    font-weight: 600;
+    margin: 18px 0 12px 0;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--accent-secondary);
+    color: var(--accent-secondary);
+}
+
+.formatted-message .md-h3 {
+    font-size: 1.3em;
+    font-weight: 600;
+    margin: 15px 0 10px 0;
+    color: var(--text-primary);
+}
+
+.formatted-message strong {
+    font-weight: 600;
+    color: var(--accent-primary);
+}
+
+body.dark-theme .formatted-message strong {
+    color: var(--accent-primary);
+}
+
+.formatted-message em {
+    font-style: italic;
+    opacity: 0.9;
+}
+
+.formatted-message .md-ul {
+    list-style: none;
+    margin: 15px 0;
+    padding-left: 0;
+}
+
+.formatted-message .md-li {
+    position: relative;
+    padding-left: 30px;
+    margin: 10px 0;
+    line-height: 1.8;
+}
+
+.formatted-message .md-li::before {
+    content: "▸";
+    position: absolute;
+    left: 10px;
+    color: var(--accent-primary);
+    font-weight: bold;
+}
+
+.formatted-message .md-code-block {
+    background: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-radius: 8px;
+    padding: 15px;
+    margin: 15px 0;
+    overflow-x: auto;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+    line-height: 1.5;
+}
+
+.formatted-message .md-inline-code {
+    background: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+}
+
 .message.ai.typing {
     display: flex;
     gap: 4px;
@@ -349,6 +442,7 @@ body.dark-theme .message.ai {
     border-radius: 50%;
     animation: bounce 1.4s infinite both;
 }
+
 .typing-dot:nth-child(2) { animation-delay: -0.16s; }
 .typing-dot:nth-child(3) { animation-delay: -0.32s; }
 
@@ -405,7 +499,6 @@ body.dark-theme .chat-input-area {
     opacity: 0.5;
 }
 
-/* CSS cho khu vực Trạng thái xử lý mới được thêm */
 .processing-status-area {
     text-align: right;
     font-size: 0.9em;
@@ -414,7 +507,6 @@ body.dark-theme .chat-input-area {
     opacity: 0.7;
     min-height: 30px; 
 }
-/* Kết thúc CSS cho khu vực Trạng thái xử lý */
 
 @media (max-width: 768px) {
     .app-layout {
@@ -446,5 +538,11 @@ body.dark-theme .chat-input-area {
 
     .message {
         max-width: 90%;
+    }
+    
+    .message.formatted-message {
+        max-width: 95%;
+        padding: 15px 18px;
+        font-size: 0.9em;
     }
 }
